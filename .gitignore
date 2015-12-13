@@ -1,0 +1,8 @@
+*.db
+*.svn-base
+.project
+*.prefs
+bin/CHECKERSv2/Checkers.class
+*.classpath
+.svn/entries
+.svn/format
