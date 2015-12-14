@@ -8,10 +8,10 @@ import java.awt.event.*;
 import java.awt.image.*;
 import java.io.*;
 import javax.imageio.ImageIO;
+import javax.swing.JApplet;
 import javax.swing.JFrame;
 
-public class Checkers extends Component implements ActionListener, MouseListener {
-	
+public class Checkers extends JApplet implements ActionListener, MouseListener {
 	private static final long serialVersionUID = 1L;
 	public static int width = 512, height = width; //square parameters for now
 	public static final int EMPTY = 0, RED = 1, RED_KING = 2, WHITE = 3, WHITE_KING = 4;
@@ -19,6 +19,7 @@ public class Checkers extends Component implements ActionListener, MouseListener
 	public static final int numTilesPerRow = width/tileSize;
 	public static int[][] gameData = new int[numTilesPerRow][numTilesPerRow];
 	public static int[][] baseGameData = new int[numTilesPerRow][numTilesPerRow];
+	
 	public boolean gameInProgress = true;
 	public int currentPlayer = RED;
 	public boolean inPlay = false;
@@ -165,7 +166,7 @@ public class Checkers extends Component implements ActionListener, MouseListener
 		if(inPlay == true && availablePlays[row][col] == 0){
 			resetPlay();
 		}
-		if(inPlay == false){
+		if(inPlay == false && gameData[row][col] != 0){
 		    if (gameInProgress == false)
 		    	System.exit(1);
 		    else {
@@ -177,6 +178,7 @@ public class Checkers extends Component implements ActionListener, MouseListener
 			}
 		}
 	}
+	
 	public void swapPlayer(){
 		if(currentPlayer == RED)
 			currentPlayer = WHITE;
