@@ -1,5 +1,4 @@
-package CHECKERSv2;
-//TESTING GIT COMMIT CHANGES
+package Checkers;
 // TODO Winning/losing
 // TODO restart/new game functions
 // TODO OPPONENT AI?
@@ -21,7 +20,7 @@ public class Checkers extends Component implements ActionListener, MouseListener
 	public static int[][] gameData = new int[numTilesPerRow][numTilesPerRow];
 	public static int[][] baseGameData = new int[numTilesPerRow][numTilesPerRow];
 	public boolean gameInProgress = true;
-	public int currentPlayer = RED, selectedRow, selectedCol;
+	public int currentPlayer = RED;
 	public boolean inPlay = false;
 	public static int[][] availablePlays = new int[numTilesPerRow][numTilesPerRow];
 	public int storedRow, storedCol;
@@ -84,14 +83,6 @@ public class Checkers extends Component implements ActionListener, MouseListener
 					gameData[1][col] = WHITE;
 	}
 	
-	public static void checkGameData(){ // Used for debugging purposes
-		for(int row = 0; row < numTilesPerRow; row++){
-			System.out.println("");
-			for(int col = 0; col < numTilesPerRow; col++){
-				System.out.print(gameData[row][col]);
-			}
-		}
-	}
 	public static void drawPiece(int x, int y, Graphics g, Color color){ //TODO FIX THESE STUPID VARIABLES TO BE LIKE THE OTHERS
 		((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 	    ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
@@ -118,8 +109,6 @@ public class Checkers extends Component implements ActionListener, MouseListener
 			}
 		}
 		//PRINT THE PIECES
-		System.out.println(""); //TODO REMOVE
-		System.out.println("I just displayed the board."); //TODO REMOVE
 		for(int row = 0; row < numTilesPerRow; row++){
 			for(int col = 0; col < numTilesPerRow; col++){
 				if(availablePlays[row][col] == 1){
@@ -130,7 +119,7 @@ public class Checkers extends Component implements ActionListener, MouseListener
 					drawPiece(col*tileSize, row*tileSize, g, Color.white);
 				else if(gameData[row][col] == WHITE_KING){
 					drawPiece(col*tileSize, row*tileSize, g, Color.white);
-				BufferedImage img = null, slate;
+				BufferedImage img = null;
 				try {	
 					img = ImageIO.read(new File("crown.png"));
 				} catch (IOException e) {
@@ -143,7 +132,7 @@ public class Checkers extends Component implements ActionListener, MouseListener
 				else if(gameData[row][col] == RED_KING){
 					drawPiece(col*tileSize, row*tileSize, g, Color.red);
 					
-				BufferedImage img = null, slate;
+				BufferedImage img = null;
 				try {	
 					img = ImageIO.read(new File("crown.png"));
 				} catch (IOException e) {
@@ -167,7 +156,6 @@ public class Checkers extends Component implements ActionListener, MouseListener
 		}
 		repaint();
 	}
-	public void mouseClicked(MouseEvent e) {}
 	public void mousePressed(MouseEvent e) {
     	int col = e.getX() / tileSize;
         int row = e.getY() / tileSize;
@@ -187,7 +175,6 @@ public class Checkers extends Component implements ActionListener, MouseListener
 		        	getAvailablePlays(gameData, row, col);
 		    	}
 			}
-		    checkGameData();
 		}
 	}
 	public void swapPlayer(){
@@ -400,23 +387,21 @@ public class Checkers extends Component implements ActionListener, MouseListener
 	}
 	
 	public int getJumpRow(int row, int col, int row2, int col2){
-		int toRow = 0;
 		if(col > col2 && row > row2 && gameData[row-2][col-2] == 0){
-			toRow = row-2;
+			return row-2;
 		}
-		if(col > col2 && row < row2 && gameData[row+2][col-2] == 0){
-			toRow = row+2;
+		else if(col > col2 && row < row2 && gameData[row+2][col-2] == 0){
+			return row+2;
 		}
-		if(col < col2 && row > row2 && gameData[row-2][col+2] == 0){
-			toRow = row-2;
+		else if(col < col2 && row > row2 && gameData[row-2][col+2] == 0){
+			return row-2;
 		}
-		if(col < col2 && row < row2 && gameData[row+2][col+2] == 0){
-			toRow = row+2;
-		}
-		return toRow;
+		else
+			return row+2;
 	}
-	
+
 	// Methods that must be included for some reason? WHY
+	public void mouseClicked(MouseEvent e) {}
 	public void mouseReleased(MouseEvent e) {}
 	public void mouseEntered(MouseEvent e) {}
 	public void mouseExited(MouseEvent e) {}
