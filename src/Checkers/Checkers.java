@@ -1,44 +1,50 @@
-package Checkers;
 // TODO Winning/losing
 // TODO restart/new game functions
 // TODO OPPONENT AI?
-
+// Derek Watring
+// NOTE: Information on each method is available at https://github.com/dwatring/Java-Checkers/wiki
+package Checkers;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.*;
 import javax.imageio.ImageIO;
-import javax.swing.JApplet;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 
-public class Checkers extends JApplet implements ActionListener, MouseListener {
-	private static final long serialVersionUID = 1L;
-	public static int width = 512, height = width; //square parameters for now
-	public static final int EMPTY = 0, RED = 1, RED_KING = 2, WHITE = 3, WHITE_KING = 4;
-	public static final int tileSize = width/8;
+public class Checkers extends JPanel implements ActionListener, MouseListener {
+	private static final long serialVersionUID = 1L; //Why? TODO GOOGLE
+	public static int width = 720, height = width; //square parameters. Optimized for any square resolution TODO any resolution to be squared
+	public static final int tileSize = width/8; //8 Tiles for checkers board
 	public static final int numTilesPerRow = width/tileSize;
-	public static int[][] gameData = new int[numTilesPerRow][numTilesPerRow];
-	public static int[][] baseGameData = new int[numTilesPerRow][numTilesPerRow];
+	public static int[][] baseGameData = new int[numTilesPerRow][numTilesPerRow]; //Stores 8x8 board layout
+	public static int[][] gameData = new int[numTilesPerRow][numTilesPerRow]; //Stores piece data in an 8x8
+	public static final int EMPTY = 0, RED = 1, RED_KING = 2, WHITE = 3, WHITE_KING = 4; //Values for gameData
 	
 	public boolean gameInProgress = true;
 	public int currentPlayer = RED;
-	public boolean inPlay = false;
-	public static int[][] availablePlays = new int[numTilesPerRow][numTilesPerRow];
+	public boolean inPlay = false; //Is there a move function processing?
+	public static int[][] availablePlays = new int[numTilesPerRow][numTilesPerRow]; //Stores available plays in an 8x8
 	public int storedRow, storedCol;
 	public boolean isJump = false;
+	static BufferedImage crownImage = null;
+	
+	//TODO can I eliminate isJump or inPlay?
 	
 	public static void main(String[] args){
+		try {
+			crownImage = ImageIO.read(new File("crown.png"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		new Checkers();
 	}
 	
 	public Checkers(){
-		initializeBoard();
 		window(width, height, this);
-		repaint(); // This is included in the JVM. Runs paint again.
-	}
-	
-	public void update(Graphics g) {
-	    paint(g);
+		initializeBoard();
+		repaint(); // This is included in the JVM. Runs paint.
 	}
 	
 	public void gameOver(){
@@ -49,6 +55,7 @@ public class Checkers extends JApplet implements ActionListener, MouseListener {
 	public void window(int width, int height, Checkers game){ //draw the frame and add exit functionality
 		JFrame frame = new JFrame();
 		frame.setSize(width, height);
+		frame.setIconImage(crownImage);
 		frame.setBackground(Color.cyan);
 		frame.setLocationRelativeTo(null);
 		frame.pack();
@@ -60,15 +67,15 @@ public class Checkers extends JApplet implements ActionListener, MouseListener {
 		frame.setPreferredSize(new Dimension(width + frameLeftBorder + frameRightBorder, height + frameBottomBorder + frameTopBorder));
 		frame.setMaximumSize(new Dimension(width + frameLeftBorder + frameRightBorder, height + frameBottomBorder + frameTopBorder));
 		frame.setMinimumSize(new Dimension(width + frameLeftBorder + frameRightBorder, height + frameBottomBorder + frameTopBorder));
-		frame.add(game);
 		frame.setLocationRelativeTo(null);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		addMouseListener(this);
+		frame.addMouseListener(this);
+		frame.requestFocus();
 		frame.setVisible(true);
-		
+		frame.add(game);
 	}
 	
-	public static void initializeBoard(){
+	public void initializeBoard(){
 		//UPDATE THE STARTING POSITIONS
 				for(int col=0; col < (numTilesPerRow); col+=2){
 					gameData[5][col] = RED;
@@ -84,16 +91,21 @@ public class Checkers extends JApplet implements ActionListener, MouseListener {
 					gameData[1][col] = WHITE;
 	}
 	
-	public static void drawPiece(int x, int y, Graphics g, Color color){ //TODO FIX THESE STUPID VARIABLES TO BE LIKE THE OTHERS
+	public static void drawPiece(int col, int row, Graphics g, Color color){
 		((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 	    ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 		g.setColor(color);
-		g.fillOval(x+2, y+2, tileSize-4, tileSize-4); // These 2 and 4 values are arbitrary values that compensate for a smaller piece size
+		// These 2 and 4 values are arbitrary values that compensate for a smaller piece size than tileSize
+		g.fillOval((col*tileSize)+2, (row*tileSize)+2, tileSize-4, tileSize-4);
 	}
+	
 	public void paint(Graphics g){ // This method paints the board
+		//PRINT THE BOARD & PIECES
+		super.paintComponent(g);
+		long timeStart = System.currentTimeMillis();
 		for(int row = 0; row < numTilesPerRow; row++){
-					for(int col = 0; col < numTilesPerRow; col++){
-						if((row%2 == 0 && col%2 == 0) || (row%2 != 0 && col%2 != 0)){ // This assigns the checkerboard pattern
+			for(int col = 0; col < numTilesPerRow; col++){
+				if((row%2 == 0 && col%2 == 0) || (row%2 != 0 && col%2 != 0)){ // This assigns the checkerboard pattern
 					baseGameData[row][col] = 0;
 					g.setColor(Color.gray);
 					g.fillRect(col*tileSize, row*tileSize, tileSize, tileSize);
@@ -107,44 +119,28 @@ public class Checkers extends JApplet implements ActionListener, MouseListener {
 					g.setColor(Color.darkGray.darker());
 					g.fillRect(col*tileSize, row*tileSize, tileSize, tileSize);
 				}
-			}
-		}
-		//PRINT THE PIECES
-		for(int row = 0; row < numTilesPerRow; row++){
-			for(int col = 0; col < numTilesPerRow; col++){
 				if(availablePlays[row][col] == 1){
 					g.setColor(Color.CYAN.darker());
 					g.fillRect(col*tileSize, row*tileSize, tileSize, tileSize);
 				}
 				if(gameData[row][col] == WHITE)
-					drawPiece(col*tileSize, row*tileSize, g, Color.white);
+					drawPiece(col, row, g, Color.white);
 				else if(gameData[row][col] == WHITE_KING){
-					drawPiece(col*tileSize, row*tileSize, g, Color.white);
-				BufferedImage img = null;
-				try {	
-					img = ImageIO.read(new File("crown.png"));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				g.drawImage(img, (col*tileSize)+6, (row*tileSize)+6, tileSize-12, tileSize-12, null);
+					drawPiece(col, row, g, Color.white);
+					g.drawImage(crownImage, (col*tileSize)+6, (row*tileSize)+6, tileSize-12, tileSize-12, null);
 				}
 				else if(gameData[row][col] == RED)
-					drawPiece(col*tileSize, row*tileSize, g, Color.red);
+					drawPiece(col, row, g, Color.red);
 				else if(gameData[row][col] == RED_KING){
-					drawPiece(col*tileSize, row*tileSize, g, Color.red);
-					
-				BufferedImage img = null;
-				try {	
-					img = ImageIO.read(new File("crown.png"));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				
-				g.drawImage(img, (col*tileSize)+6, (row*tileSize)+6, tileSize-12, tileSize-12, null);
+					drawPiece(col, row, g, Color.red);
+				g.drawImage(crownImage, (col*tileSize)+6, (row*tileSize)+6, tileSize-12, tileSize-12, null);
 				}
 			}
 		}
+		long timeEnd = System.currentTimeMillis();
+		System.out.println(timeEnd - timeStart);
 	}
+	
 	public void resetPlay(){
 		storedCol = 0;
 		storedRow = 0;
@@ -157,9 +153,10 @@ public class Checkers extends JApplet implements ActionListener, MouseListener {
 		}
 		repaint();
 	}
-	public void mousePressed(MouseEvent e) {
-    	int col = e.getX() / tileSize;
-        int row = e.getY() / tileSize;
+	
+	public void mousePressed(java.awt.event.MouseEvent evt) {
+    	int col = evt.getX() / tileSize;
+        int row = evt.getY() / tileSize;
 		if(inPlay == true && availablePlays[row][col] == 1){
 			makeMove(gameData, row, col, storedRow, storedCol);
 		}
@@ -170,11 +167,9 @@ public class Checkers extends JApplet implements ActionListener, MouseListener {
 		    if (gameInProgress == false)
 		    	System.exit(1);
 		    else {
-		    	if (col >= 0 && col < 8 && row >= 0 && row < 8){
-		        	storedCol = col;
-		            storedRow = row;
-		        	getAvailablePlays(gameData, row, col);
-		    	}
+		        storedCol = col;
+		        storedRow = row;
+		        getAvailablePlays(gameData, row, col);
 			}
 		}
 	}
@@ -340,10 +335,15 @@ public class Checkers extends JApplet implements ActionListener, MouseListener {
 	}
 	
 	public boolean canJump(int row, int col, int row2, int col2){
-		//Steps for checking if canJump is true: determine piece in movement. Then check if its an opponent piece, then if the space behind it is empty
+		//Steps for checking if canJump is true: determine piece within movement. Then check if its an opponent piece, then if the space behind it is empty
+		//and in bounds
 		// 4 conditions based on column and row relations to the other piece
 		int toRow = -1, toCol = -1;
-		if(((gameData[row][col] == WHITE || gameData[row][col] == WHITE_KING) && (gameData[row2][col2] == RED || gameData[row2][col2] == RED_KING)) || (gameData[row][col] == RED || gameData[row][col] == RED_KING) && (gameData[row2][col2] == WHITE || gameData[row2][col2] == WHITE_KING)){
+		if(((gameData[row][col] == WHITE || gameData[row][col] == WHITE_KING) 
+				&& (gameData[row2][col2] == RED || gameData[row2][col2] == RED_KING)) 
+				|| (gameData[row][col] == RED || gameData[row][col] == RED_KING) 
+				&& (gameData[row2][col2] == WHITE || gameData[row2][col2] == WHITE_KING)){ 
+			//If the piece is white/red and opponent piece is opposite TODO fix this if. It's so ugly
 			if(col > col2 && row > row2){
 				toRow = row-2;
 				toCol = col-2;
@@ -360,7 +360,7 @@ public class Checkers extends JApplet implements ActionListener, MouseListener {
 				toRow = row+2;
 				toCol = col+2;
 			}
-		    if (toRow < 0 || toRow >= numTilesPerRow || toCol < 0 || toCol >= numTilesPerRow)
+		    if (toRow < 0 || toRow >= numTilesPerRow || toCol < 0 || toCol >= numTilesPerRow) //check board outofbounds
 		        return false;
 		    
 		    if(gameData[toRow][toCol] == 0){
@@ -401,7 +401,7 @@ public class Checkers extends JApplet implements ActionListener, MouseListener {
 		else
 			return row+2;
 	}
-
+	
 	// Methods that must be included for some reason? WHY
 	public void mouseClicked(MouseEvent e) {}
 	public void mouseReleased(MouseEvent e) {}
