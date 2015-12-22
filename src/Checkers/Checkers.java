@@ -29,7 +29,7 @@ public class Checkers extends JPanel implements ActionListener, MouseListener {
 	public boolean isJump = false;
 	static BufferedImage crownImage = null;
 	
-	//TODO can I eliminate isJump or inPlay?
+	//TODO can I eliminate isJump?
 	
 	public static void main(String[] args){
 		try {
@@ -78,17 +78,17 @@ public class Checkers extends JPanel implements ActionListener, MouseListener {
 	public void initializeBoard(){
 		//UPDATE THE STARTING POSITIONS
 				for(int col=0; col < (numTilesPerRow); col+=2){
-					gameData[5][col] = RED;
-					gameData[7][col] = RED;
+					gameData[col][5] = RED;
+					gameData[col][7] = RED;
 				}
 				for(int col=1; col < (numTilesPerRow); col+=2)
-					gameData[6][col] = RED;
+					gameData[col][6] = RED;
 				for(int col=1; col < (numTilesPerRow); col+=2){
-					gameData[0][col] = WHITE;
-					gameData[2][col] = WHITE;
-				}
+					gameData[col][0] = WHITE;
+					gameData[col][2] = WHITE;
+				}	
 				for(int col=0; col < (numTilesPerRow); col+=2)
-					gameData[1][col] = WHITE;
+					gameData[col][1] = WHITE;
 	}
 	
 	public static void drawPiece(int col, int row, Graphics g, Color color){
@@ -102,43 +102,40 @@ public class Checkers extends JPanel implements ActionListener, MouseListener {
 	public void paint(Graphics g){ // This method paints the board
 		//PRINT THE BOARD & PIECES
 		super.paintComponent(g);
-		long timeStart = System.currentTimeMillis();
 		for(int row = 0; row < numTilesPerRow; row++){
 			for(int col = 0; col < numTilesPerRow; col++){
 				if((row%2 == 0 && col%2 == 0) || (row%2 != 0 && col%2 != 0)){ // This assigns the checkerboard pattern
-					baseGameData[row][col] = 0;
+					baseGameData[col][row] = 0;
 					g.setColor(Color.gray);
 					g.fillRect(col*tileSize, row*tileSize, tileSize, tileSize);
 				}
 				else{
-					baseGameData[row][col] = 1;
+					baseGameData[col][row] = 1;
 					g.setColor(Color.darkGray);
 					g.fillRect(col*tileSize, row*tileSize, tileSize, tileSize);
 				}
-				if(checkTeamPiece(gameData, row, col) ==  true){			
+				if(checkTeamPiece(col, row) ==  true){			
 					g.setColor(Color.darkGray.darker());
 					g.fillRect(col*tileSize, row*tileSize, tileSize, tileSize);
 				}
-				if(availablePlays[row][col] == 1){
+				if(availablePlays[col][row] == 1){
 					g.setColor(Color.CYAN.darker());
 					g.fillRect(col*tileSize, row*tileSize, tileSize, tileSize);
 				}
-				if(gameData[row][col] == WHITE)
+				if(gameData[col][row] == WHITE)
 					drawPiece(col, row, g, Color.white);
-				else if(gameData[row][col] == WHITE_KING){
+				else if(gameData[col][row] == WHITE_KING){
 					drawPiece(col, row, g, Color.white);
 					g.drawImage(crownImage, (col*tileSize)+6, (row*tileSize)+6, tileSize-12, tileSize-12, null);
 				}
-				else if(gameData[row][col] == RED)
+				else if(gameData[col][row] == RED)
 					drawPiece(col, row, g, Color.red);
-				else if(gameData[row][col] == RED_KING){
+				else if(gameData[col][row] == RED_KING){
 					drawPiece(col, row, g, Color.red);
 				g.drawImage(crownImage, (col*tileSize)+6, (row*tileSize)+6, tileSize-12, tileSize-12, null);
 				}
 			}
 		}
-		long timeEnd = System.currentTimeMillis();
-		System.out.println(timeEnd - timeStart);
 	}
 	
 	public void resetPlay(){
@@ -148,29 +145,26 @@ public class Checkers extends JPanel implements ActionListener, MouseListener {
 		isJump = false;
 		for(int row = 0; row < numTilesPerRow; row++){
 			for(int col = 0; col < numTilesPerRow; col++){
-				availablePlays[row][col] = 0;
+				availablePlays[col][row] = 0;
 			}
 		}
 		repaint();
 	}
 	
 	public void mousePressed(java.awt.event.MouseEvent evt) {
-    	int col = evt.getX() / tileSize;
-        int row = evt.getY() / tileSize;
-		if(inPlay == true && availablePlays[row][col] == 1){
-			makeMove(gameData, row, col, storedRow, storedCol);
-		}
-		if(inPlay == true && availablePlays[row][col] == 0){
+    	int col = (evt.getX()-8) / tileSize; // 8 is left frame length
+        int row = (evt.getY()-30) / tileSize; // 30 is top frame length
+		if(inPlay == false && gameData[col][row] != 0 || inPlay == true && checkTeamPiece(col, row) == true){
 			resetPlay();
+			storedCol = col;
+			storedRow = row; // Sets the current click to instance variables to be used elsewhere
+			getAvailablePlays(col, row);
 		}
-		if(inPlay == false && gameData[row][col] != 0){
-		    if (gameInProgress == false)
-		    	System.exit(1);
-		    else {
-		        storedCol = col;
-		        storedRow = row;
-		        getAvailablePlays(gameData, row, col);
-			}
+		else if(inPlay == true && availablePlays[col][row] == 1){
+			makeMove(col, row, storedCol, storedRow);
+		}
+		else if(inPlay == true && availablePlays[col][row] == 0){
+			resetPlay();
 		}
 	}
 	
@@ -180,26 +174,26 @@ public class Checkers extends JPanel implements ActionListener, MouseListener {
 		else currentPlayer = RED;
 	}
 	
-	public void makeMove(int[][] gameData, int row, int col, int storedRow, int storedCol){ // is gameData needed to be in these functions?
-		int x = gameData[storedRow][storedCol]; //change the piece to new tile
-		gameData[row][col] = x;
+	public void makeMove(int col, int row, int storedCol, int storedRow){ // is gameData needed to be in these functions?
+		int x = gameData[storedCol][storedRow]; //change the piece to new tile
+		gameData[col][row] = x;
 		if(isJump == true)
-			removePiece(gameData, row, col, storedRow, storedCol);
-		makeKing(gameData, row, col, storedRow, storedCol);
-		gameData[storedRow][storedCol] = EMPTY; //change old piece location to EMPTY
-		swapPlayer();
+			removePiece(col, row, storedCol, storedRow);
+		makeKing(col, row);
+		gameData[storedCol][storedRow] = EMPTY; //change old piece location to EMPTY
 		resetPlay();
+		swapPlayer();
 	}
 	
-	public void makeKing(int[][] gameData, int row, int col, int storedRow, int storedCol){
-		if(gameData[row][col] == RED && row == 0)
-			gameData[row][col] = RED_KING;
-		else if(gameData[row][col] == WHITE && row == numTilesPerRow-1)
-			gameData[row][col] = WHITE_KING;
+	public void makeKing(int col, int row){
+		if(gameData[col][row] == RED && row == 0)
+			gameData[col][row] = RED_KING;
+		else if(gameData[col][row] == WHITE && row == numTilesPerRow-1)
+			gameData[col][row] = WHITE_KING;
 		else return;
 	}
 	
-	public void removePiece(int[][] gameData, int row, int col, int storedRow, int storedCol){ //might be a better way to do this, but detects position of opponent piece based on destination and original position
+	public void removePiece(int col, int row, int storedCol, int storedRow){ //might be a better way to do this, but detects position of opponent piece based on destination and original position
 		int pieceRow = -1; 
 		int pieceCol = -1;
 		if(col > storedCol && row > storedRow){
@@ -218,152 +212,134 @@ public class Checkers extends JPanel implements ActionListener, MouseListener {
 			pieceRow = row+1;
 			pieceCol = col+1;
 		}
-		gameData[pieceRow][pieceCol] = EMPTY;
-	}
+		gameData[pieceCol][pieceRow] = EMPTY;
+	}//TODO REWRITE
 	
-	public void getAvailablePlays(int[][] gameData, int row, int col){
+	public void getAvailablePlays(int col, int row){
 		inPlay = true;
-		if((checkTeamPiece(gameData, row, col) == true)){ //checks if the piece is assigned to the current player
-			if(gameData[row][col] == RED){  // only goes north, checks the row above it's own
-				getUp(row, col);
+		if((checkTeamPiece(col, row) == true)){ //checks if the piece is assigned to the current player
+			if(gameData[col][row] == RED){  // only goes north, checks the row above it's own
+				getUp(col, row);
 			}
-			if(gameData[row][col] == WHITE){ // only goes south, checks the row below it's own
-				getDown(row, col);
+			if(gameData[col][row] == WHITE){ // only goes south, checks the row below it's own
+				getDown(col, row);
 			}
-			if(gameData[row][col] == RED_KING || gameData[row][col] == WHITE_KING){ // Goes up OR down 1 row below it's own
-				getUp(row, col);
-			  //getUp(row, col);
-				getDown(row, col); // GET UP GET UP AND GET DOWN
+			if(gameData[col][row] == RED_KING || gameData[col][row] == WHITE_KING){ // Goes up OR down 1 row below it's own
+				getUp(col, row);
+			  //getUp(col, row);
+				getDown(col, row); // GET UP GET UP AND GET DOWN
 			}
-		}
 		repaint();
+		}
 	}
 	
-	public void getUp(int row, int col){
+	public void getUp(int col, int row){ // Get Up availability
 		int rowUp = row-1;
-		if(col == 0 && row != 0){
-			for(int i = col; i < col+2; i++){
-				if(gameData[row][col] != 0 && gameData[rowUp][i] != 0){
-					if(canJump(row, col, rowUp, i) == true){
-						int jumpRow = getJumpRow(row, col, rowUp, i);
-						int jumpCol = getJumpCol(row, col, rowUp, i);
-						availablePlays[jumpRow][jumpCol] = 1;
+		if(col == 0 && row != 0){ //X=0, Y is not 0
+			for(int i = col; i < col+2; i++){ //check to right
+				if(gameData[col][row] != 0 && gameData[i][rowUp] != 0){
+					if(canJump(col, row, i, rowUp) == true){
+						int jumpCol = getJumpPos(col, row, i, rowUp)[0];
+						int jumpRow = getJumpPos(col, row, i, rowUp)[1];
+						availablePlays[jumpCol][jumpRow] = 1;
 					}
 				}
-				else if(baseGameData[rowUp][i] == 1 && gameData[rowUp][i] == 0)
-					availablePlays[rowUp][i] = 1;
+				else if(baseGameData[i][rowUp] == 1 && gameData[i][rowUp] == 0)
+					availablePlays[i][rowUp] = 1;
 			}
 		}
-		else if(col == numTilesPerRow - 1 && row != 0){
-			for(int i = col-1; i < col+1; i++){
-				if(gameData[row][col] != 0 && gameData[rowUp][i] != 0){
-					if(canJump(row, col, rowUp, i) == true){
-						int jumpRow = getJumpRow(row, col, rowUp, i);
-						int jumpCol = getJumpCol(row, col, rowUp, i);
-						availablePlays[jumpRow][jumpCol] = 1;
+		else if(col == (numTilesPerRow - 1) && row != 0){ //X=max, Y is not 0
+				if(gameData[col][row] != 0 && gameData[col-1][rowUp] != 0){
+					if(canJump(col, row, col-1, rowUp) == true){
+						int jumpCol = getJumpPos(col, row, col-1, rowUp)[0];
+						int jumpRow = getJumpPos(col, row, col-1, rowUp)[1];
+						availablePlays[jumpCol][jumpRow] = 1;
 					}
 				}
-				else if(baseGameData[rowUp][i] == 1 && gameData[rowUp][i] == 0)
-					availablePlays[rowUp][i] = 1;
-			}
+				else if(baseGameData[col-1][rowUp] == 1 && gameData[col-1][rowUp] == 0)
+					availablePlays[col-1][rowUp] = 1;
 		}
-		else if(col != numTilesPerRow -1 && col != 0 && row != 0){
-			for(int i = col-1; i < col+2; i++){
-				if(gameData[row][col] != 0 && gameData[rowUp][i] != 0){
-					if(canJump(row, col, rowUp, i) == true){
-						int jumpRow = getJumpRow(row, col, rowUp, i);
-						int jumpCol = getJumpCol(row, col, rowUp, i);
-						availablePlays[jumpRow][jumpCol] = 1;
+		else if(col != numTilesPerRow - 1 && col != 0 && row != 0){
+			for(int i = col-1; i <= col+1; i++){
+				if(gameData[col][row] != 0 && gameData[i][rowUp] != 0){
+					if(canJump(col, row, i, rowUp) == true){
+						int jumpCol = getJumpPos(col, row, i, rowUp)[0];
+						int jumpRow = getJumpPos(col, row, i, rowUp)[1];
+						availablePlays[jumpCol][jumpRow] = 1;
 					}
 				}
-				else if(baseGameData[rowUp][i] == 1 && gameData[rowUp][i] == 0)
-					availablePlays[rowUp][i] = 1;
+				else if(baseGameData[i][rowUp] == 1 && gameData[i][rowUp] == 0)
+					availablePlays[i][rowUp] = 1;
 			}
 		}
 	}
 	
-	public void getDown(int row, int col){
+	public void getDown(int col, int row){
 		int rowDown = row+1;
 		if(col == 0 && row != numTilesPerRow-1){
-			for(int i = col; i < col+2; i++){
-				if(gameData[row][col] != 0 && gameData[rowDown][i] != 0){
-					if(canJump(row, col, rowDown, i) == true){
-						int jumpRow = getJumpRow(row, col, rowDown, i);
-						int jumpCol = getJumpCol(row, col, rowDown, i);
-						availablePlays[jumpRow][jumpCol] = 1;
+				if(gameData[col][row] != 0 && gameData[col+1][rowDown] != 0){
+					if(canJump(col, row, col+1, rowDown) == true){
+						int jumpCol = getJumpPos(col, row, col+1, rowDown)[0];
+						int jumpRow = getJumpPos(col, row, col+1, rowDown)[1];
+						availablePlays[jumpCol][jumpRow] = 1;
 					}
 				}
-				else if(baseGameData[rowDown][i] == 1 && gameData[rowDown][i] == 0)
-					availablePlays[rowDown][i] = 1;
-			}
+				else if(baseGameData[col+1][rowDown] == 1 && gameData[col+1][rowDown] == 0)
+					availablePlays[col+1][rowDown] = 1;
 		}
 		else if(col == numTilesPerRow - 1 && row != numTilesPerRow-1){
-			for(int i = col-1; i < col+1; i++){
-				if(gameData[row][col] != 0 && gameData[rowDown][i] != 0){
-					if(canJump(row, col, rowDown, i) == true){
-						int jumpRow = getJumpRow(row, col, rowDown, i);
-						int jumpCol = getJumpCol(row, col, rowDown, i);
-						availablePlays[jumpRow][jumpCol] = 1;
+				if(gameData[col][row] != 0 && gameData[col-1][rowDown] != 0){
+					if(canJump(col, row, col-1, rowDown) == true){
+						int jumpCol = getJumpPos(col, row, col-1, rowDown)[0];
+						int jumpRow = getJumpPos(col, row, col-1, rowDown)[1];
+						availablePlays[jumpCol][jumpRow] = 1;
 					}
 				}
-				else if(baseGameData[rowDown][i] == 1 && gameData[rowDown][i] == 0)
-					availablePlays[rowDown][i] = 1;
-			}
+				else if(baseGameData[col-1][rowDown] == 1 && gameData[col-1][rowDown] == 0)
+					availablePlays[col-1][rowDown] = 1;
 		}
 		else if(col != numTilesPerRow-1 && col != 0 && row != numTilesPerRow-1){
-			for(int i = col-1; i < col+2; i++){
-				if(gameData[row][col] != 0 && gameData[rowDown][i] != 0){
-					if(canJump(row, col, rowDown, i) == true){
-						int jumpRow = getJumpRow(row, col, rowDown, i);
-						int jumpCol = getJumpCol(row, col, rowDown, i);
-						availablePlays[jumpRow][jumpCol] = 1;
+			for(int i = col-1; i <= col+1; i++){
+				if(gameData[col][row] != 0 && gameData[i][rowDown] != 0){
+					if(canJump(col, row, i, rowDown) == true){
+						int jumpCol = getJumpPos(col, row, i, rowDown)[0];
+						int jumpRow = getJumpPos(col, row, i, rowDown)[1];
+						availablePlays[jumpCol][jumpRow] = 1;
 					}
 				}
-				else if(baseGameData[rowDown][i] == 1 && gameData[rowDown][i] == 0)
-					availablePlays[rowDown][i] = 1;
+				else if(baseGameData[i][rowDown] == 1 && gameData[i][rowDown] == 0)
+					availablePlays[i][rowDown] = 1;
 			}
 		}
 	}
 	
-	public boolean checkTeamPiece(int[][] gameData, int row, int col){
-		if(currentPlayer == RED && (gameData[row][col] == RED || gameData[row][col] == RED_KING)) //bottom
+	public boolean checkTeamPiece(int col, int row){
+		if(currentPlayer == RED && (gameData[col][row] == RED || gameData[col][row] == RED_KING)) //bottom
 			return true;
-		if(currentPlayer == WHITE && (gameData[row][col] == WHITE || gameData[row][col] == WHITE_KING)) //top
+		if(currentPlayer == WHITE && (gameData[col][row] == WHITE || gameData[col][row] == WHITE_KING)) //top
 			return true;
 		else
 			return false;
 	}
 	
-	public boolean canJump(int row, int col, int row2, int col2){
+	public boolean isLegalPos(int col, int row){
+		if(row < 0 || row >= numTilesPerRow || col < 0 || col >= numTilesPerRow)
+			return false;
+		else return true;
+	}
+	
+	public boolean canJump(int col, int row, int opponentCol, int opponentRow){
 		//Steps for checking if canJump is true: determine piece within movement. Then check if its an opponent piece, then if the space behind it is empty
 		//and in bounds
 		// 4 conditions based on column and row relations to the other piece
-		int toRow = -1, toCol = -1;
-		if(((gameData[row][col] == WHITE || gameData[row][col] == WHITE_KING) 
-				&& (gameData[row2][col2] == RED || gameData[row2][col2] == RED_KING)) 
-				|| (gameData[row][col] == RED || gameData[row][col] == RED_KING) 
-				&& (gameData[row2][col2] == WHITE || gameData[row2][col2] == WHITE_KING)){ 
+		if(((gameData[col][row] == WHITE || gameData[col][row] == WHITE_KING) && (gameData[opponentCol][opponentRow] == RED || gameData[opponentCol][opponentRow] == RED_KING)) || (gameData[col][row] == RED || gameData[col][row] == RED_KING) && (gameData[opponentCol][opponentRow] == WHITE || gameData[opponentCol][opponentRow] == WHITE_KING)){ 
 			//If the piece is white/red and opponent piece is opposite TODO fix this if. It's so ugly
-			if(col > col2 && row > row2){
-				toRow = row-2;
-				toCol = col-2;
-			}
-			else if(col > col2 && row < row2){
-				toRow = row+2;
-				toCol = col-2;
-			}
-			else if(col < col2 && row > row2){
-				toRow = row-2;
-				toCol = col+2;
-			}
-			else if(col < col2 && row < row2){
-				toRow = row+2;
-				toCol = col+2;
-			}
-		    if (toRow < 0 || toRow >= numTilesPerRow || toCol < 0 || toCol >= numTilesPerRow) //check board outofbounds
+			if(opponentCol == 0 || opponentCol == numTilesPerRow-1 || opponentRow == 0 || opponentRow == numTilesPerRow-1)
+				return false;
+			int[] toData = getJumpPos(col, row, opponentCol, opponentRow);
+		    if(isLegalPos(toData[0],toData[1]) == false) //check board outofbounds
 		        return false;
-		    
-		    if(gameData[toRow][toCol] == 0){
+		    if(gameData[toData[0]][toData[1]] == 0){
 		    	isJump = true;
 		    	return true;
 		    }
@@ -371,35 +347,15 @@ public class Checkers extends JPanel implements ActionListener, MouseListener {
 		return false;
 	}
 	
-	public int getJumpCol(int row, int col, int row2, int col2){
-		int toCol = 0;
-		if(col > col2 && row > row2 && gameData[row-2][col-2] == 0){
-			toCol = col-2;
-		}
-		if(col > col2 && row < row2 && gameData[row+2][col-2] == 0){
-			toCol = col-2;
-		}
-		if(col < col2 && row > row2 && gameData[row-2][col+2] == 0){
-			toCol = col+2;
-		}
-		if(col < col2 && row < row2 && gameData[row+2][col+2] == 0){
-			toCol = col+2;
-		}
-		return toCol;
-	}
-	
-	public int getJumpRow(int row, int col, int row2, int col2){
-		if(col > col2 && row > row2 && gameData[row-2][col-2] == 0){
-			return row-2;
-		}
-		else if(col > col2 && row < row2 && gameData[row+2][col-2] == 0){
-			return row+2;
-		}
-		else if(col < col2 && row > row2 && gameData[row-2][col+2] == 0){
-			return row-2;
-		}
+	public int[] getJumpPos(int col, int row, int opponentCol, int opponentRow){
+		if(col > opponentCol && row > opponentRow && gameData[col-2][row-2] == 0)
+			return new int[] {col-2, row-2};
+		else if(col > opponentCol && row < opponentRow && gameData[col-2][row+2] == 0)
+			return new int[] {col-2, row+2};
+		else if(col < opponentCol && row > opponentRow && gameData[col+2][row-2] == 0)
+			return new int[] {col+2, row-2};
 		else
-			return row+2;
+			return new int[] {col+2, row+2};
 	}
 	
 	// Methods that must be included for some reason? WHY
