@@ -1,6 +1,6 @@
-// TODO Winning/losing
 // TODO restart/new game functions
 // TODO OPPONENT AI?
+// TODO Forced jumping?
 // Derek Watring
 // NOTE: Information on each method is available at https://github.com/dwatring/Java-Checkers/wiki
 package Checkers;
@@ -10,6 +10,7 @@ import java.awt.image.*;
 import java.io.*;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 public class Checkers extends JPanel implements ActionListener, MouseListener {
@@ -20,7 +21,7 @@ public class Checkers extends JPanel implements ActionListener, MouseListener {
 	public static int[][] baseGameData = new int[numTilesPerRow][numTilesPerRow]; //Stores 8x8 board layout
 	public static int[][] gameData = new int[numTilesPerRow][numTilesPerRow]; //Stores piece data in an 8x8
 	public static final int EMPTY = 0, RED = 1, RED_KING = 2, WHITE = 3, WHITE_KING = 4; //Values for gameData
-	
+	public static JFrame frame;
 	public boolean gameInProgress = true;
 	public int currentPlayer = RED;
 	public boolean inPlay = false; //Is there a move function processing?
@@ -28,9 +29,7 @@ public class Checkers extends JPanel implements ActionListener, MouseListener {
 	public int storedRow, storedCol;
 	public boolean isJump = false;
 	static BufferedImage crownImage = null;
-	
-	//TODO can I eliminate isJump?
-	
+
 	public static void main(String[] args){
 		try {
 			crownImage = ImageIO.read(new File("crown.png"));
@@ -47,9 +46,25 @@ public class Checkers extends JPanel implements ActionListener, MouseListener {
 		repaint(); // This is included in the JVM. Runs paint.
 	}
 	
-	public void gameOver(){
-	      gameInProgress = false;
-	      System.exit(1);
+	public boolean gameOver(){ //Wrapper for gameOverInternal
+		return gameOverInternal(0, 0, 0, 0);
+	}
+	
+	public boolean gameOverInternal(int col, int row, int red, int white){ //recursive practice
+		if(gameData[col][row] == RED || gameData[col][row] == RED_KING)
+			red += 1;
+		if(gameData[col][row] == WHITE || gameData[col][row] == WHITE_KING)
+			white += 1;
+		if(col == numTilesPerRow-1 && row == numTilesPerRow-1){
+			if(red == 0 || white == 0)
+				return true;
+			else return false;
+		}
+		if(col == numTilesPerRow-1){
+			row += 1;
+			col = -1;
+		}
+		return gameOverInternal(col+1, row, red, white);
 	}
 	
 	public void window(int width, int height, Checkers game){ //draw the frame and add exit functionality
@@ -136,7 +151,15 @@ public class Checkers extends JPanel implements ActionListener, MouseListener {
 				}
 			}
 		}
+		if(gameOver() == true)
+			gameOverDisplay();
+	}	
+	
+	public void gameOverDisplay() { //Still not functional
+		JOptionPane.showMessageDialog(frame, "Game Over", "Game Over", JOptionPane.YES_NO_OPTION);
+		System.exit(ABORT);
 	}
+
 	
 	public void resetPlay(){
 		storedCol = 0;
@@ -174,18 +197,50 @@ public class Checkers extends JPanel implements ActionListener, MouseListener {
 		else currentPlayer = RED;
 	}
 	
-	public void makeMove(int col, int row, int storedCol, int storedRow){ // is gameData needed to be in these functions?
+	public void makeMove(int col, int row, int storedCol, int storedRow){
 		int x = gameData[storedCol][storedRow]; //change the piece to new tile
 		gameData[col][row] = x;
+		gameData[storedCol][storedRow] = EMPTY; //change old piece location to EMPTY
+		checkKing(col, row);
 		if(isJump == true)
 			removePiece(col, row, storedCol, storedRow);
-		makeKing(col, row);
-		gameData[storedCol][storedRow] = EMPTY; //change old piece location to EMPTY
 		resetPlay();
 		swapPlayer();
 	}
 	
-	public void makeKing(int col, int row){
+	public boolean isKing(int col, int row){
+		if(gameData[col][row] == RED_KING || gameData[col][row] == WHITE_KING){
+			return true;
+		}
+		else return false;
+	}
+	
+	public int checkOpponent(int col, int row){
+		if(gameData[col][row] == RED || gameData[col][row] ==  RED_KING)
+			return WHITE;
+		else
+			return RED;
+	}
+	
+	public void checkExtraJumps(int col, int row){
+		int opponent = checkOpponent(col, row);
+		int opponentKing = checkOpponent(col, row) + 1;
+		if(gameData[col-1][row-1] == opponent || gameData[col-1][row-1] == opponentKing){
+			availablePlays[col-1][row-1] = 1;
+		}
+		else if(gameData[col+1][row-1] == opponent || gameData[col+1][row-1] == opponentKing){
+			availablePlays[col+1][row-1] = 1;
+		}
+		else if(gameData[col-1][row+1] == opponent || gameData[col-1][row+1] == opponentKing){
+			availablePlays[col-1][row+1] = 1;
+		}
+		else if(gameData[col+1][row+1] == opponent || gameData[col+1][row+1] == opponentKing){
+			availablePlays[col+1][row+1] = 1;
+		}
+		repaint();
+	}
+	
+	public void checkKing(int col, int row){
 		if(gameData[col][row] == RED && row == 0)
 			gameData[col][row] = RED_KING;
 		else if(gameData[col][row] == WHITE && row == numTilesPerRow-1)
@@ -365,3 +420,4 @@ public class Checkers extends JPanel implements ActionListener, MouseListener {
 	public void mouseExited(MouseEvent e) {}
 	public void actionPerformed(ActionEvent e) {}
 }
+
