@@ -152,14 +152,17 @@ public class Checkers extends JPanel implements ActionListener, MouseListener {
 			}
 		}
 		if(gameOver() == true)
-			gameOverDisplay();
+			gameOverDisplay(g);
 	}	
 	
-	public void gameOverDisplay() { //Still not functional
-		JOptionPane.showMessageDialog(frame, "Game Over", "Game Over", JOptionPane.YES_NO_OPTION);
-		System.exit(ABORT);
+	public void gameOverDisplay(Graphics g) { //Displays the game over message
+		 String msg = "Game Over";
+	     Font small = new Font("Helvetica", Font.BOLD, 20);
+	     FontMetrics metr = getFontMetrics(small);
+	     g.setColor(Color.white);
+	     g.setFont(small);
+	     g.drawString(msg, (width - metr.stringWidth(msg)) / 2, width / 2);
 	}
-
 	
 	public void resetPlay(){
 		storedCol = 0;
