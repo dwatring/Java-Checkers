@@ -10,7 +10,6 @@ import java.awt.image.*;
 import java.io.*;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 public class Checkers extends JPanel implements ActionListener, MouseListener {
