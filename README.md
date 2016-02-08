@@ -10,5 +10,4 @@ N/A
 * Visit the [Wiki](https://github.com/dwatring/Java-Checkers/wiki) in order to view each method in detail!
 
 ### About Me
-* Visit [Derek-Watring.com](http://Derek-Watring.com/projects) to view my other projects. This site also contains my blog and other personal information. 
-* [My Resume](https://www.dropbox.com/s/dr5npw4azbi4bmz/RESUME2.0.pdf?dl=0&preview=RESUME2.0.pdf)
+* Visit [Derek-Watring.com](http://Derek-Watring.com/) to view my other projects. This site also contains my blog and other personal information. 
