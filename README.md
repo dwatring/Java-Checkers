@@ -1,5 +1,5 @@
 # Java Checkers
-This Java desktop program simulates a game of checkers. If you're interested, the wiki here on github explains each method and class variable.
+This Java desktop application simulates a game of checkers using Swing.
 
 This is a culmination of my java programming experience up to this point.
 
